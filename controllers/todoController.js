@@ -1,16 +1,21 @@
+import mongoose from "mongoose";
 import Todo from "../db/models/todoModel.js";
+
+const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
 
 const allTodos = async (req, res) => {
   try {
-    const todos = await Todo.find({});
+    const todos = await Todo.find({}).sort({ createdAt: -1 });
     res.status(200).json({
       status: "success",
+      results: todos.length,
       data: todos,
     });
   } catch (err) {
+    console.log("Error fetching todos", err);
     res.status(500).json({
       status: "fail",
-      message: err.message,
+      message: "failed to fetch todos",
     });
   }
 };
