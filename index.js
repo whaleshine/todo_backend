@@ -10,16 +10,24 @@ app.use(express.json());
 app.use(cors());
 app.use(morgan("dev"));
 
-const PORT = 5000;
-
-connectDB();
-
 app.use("/todos", todoRouter);
 
 app.get("/", (req, res) => {
-  res.send("Hello World!");
+  res.send("Todo API is running!");
 });
 
-app.listen(PORT, () => {
-  console.log(`Server is running on ${PORT}`);
-});
+const PORT = process.env.PORT || 5000;
+
+const startServer = async () => {
+  try {
+    await connectDB();
+    app.listen(PORT, () => {
+      console.log(`🚀 Server running on http://localhost:${PORT}`);
+    });
+  } catch (err) {
+    console.error("Failed to start server:", err);
+    process.exit(1);
+  }
+};
+
+startServer();
