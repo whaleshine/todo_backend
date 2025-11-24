@@ -21,12 +21,12 @@ const allTodos = async (req, res) => {
 };
 
 const addTodo = async (req, res) => {
-  const { title, description, isCompleted } = req.body;
+  const { title, description } = req.body;
 
   if (!title || !description) {
-    res.status(401).json({
+    res.status(400).json({
       status: "fail",
-      message: "invalid credentials, please check",
+      message: "Title and Description are required !",
     });
   }
 
@@ -36,15 +36,16 @@ const addTodo = async (req, res) => {
       description,
       isCompleted,
     });
-    res.status(200).json({
+    res.status(201).json({
       status: "success",
       message: "Todo Added Successfully !",
       todo,
     });
   } catch (err) {
+    console.log("Error creating todo", err);
     res.status(500).json({
       status: "fail",
-      message: err.message,
+      message: "failed to create todo",
     });
   }
 };
@@ -53,10 +54,24 @@ const updateTodo = async (req, res) => {
   const { id } = req.params;
   const { isCompleted } = req.body;
 
-  if (!id || isCompleted === undefined) {
-    res.status(401).json({
+  if (!id) {
+    return res.status(400).json({
       status: "fail",
-      message: "invalid credentials, please check",
+      message: "Todo ID is required !",
+    });
+  }
+
+  if (!isValidObjectId(id)) {
+    return res.status(400).json({
+      status: "fail",
+      message: "Invalid todo ID format",
+    });
+  }
+
+  if (isCompleted === undefined) {
+    return res.status(400).json({
+      status: "fail",
+      message: "isCompleted field is required !",
     });
   }
 
@@ -66,15 +81,26 @@ const updateTodo = async (req, res) => {
       {
         isCompleted,
       },
+      { new: true, runValidators: true },
     );
+
+    if (!updatedTodo) {
+      return res.status(404).json({
+        status: "fail",
+        message: "Todo not found",
+      });
+    }
+
     res.status(200).json({
       status: "success",
       message: "sucessfully updated !",
+      data: updatedTodo,
     });
   } catch (err) {
+    console.log("Error updating todo", err);
     res.status(500).json({
       status: "fail",
-      message: err.message,
+      message: "failed to update todo",
     });
   }
 };
@@ -83,24 +109,41 @@ const deleteTodo = async (req, res) => {
   const { id } = req.params;
 
   if (!id) {
-    res.status(401).json({
+    return res.status(400).json({
       status: "fail",
-      message: "invalid id, please check !",
+      message: "Todo ID is required",
     });
+  }
+
+  if(!isValidObjectId(id)){
+    return res.status(400).json({
+      status: "fail",
+      message: 'Invalid todo ID format'
+    })
   }
 
   try {
     const deletedTodo = await Todo.deleteOne({
       _id: id,
     });
+
+    if(!deletedTodo) {
+      return res.status(404).json({
+        status: "fail",
+        message: "Todo not found"
+      })
+    }
+    
     res.status(200).json({
       status: "success",
       message: "Todo Deleted Successfully !",
+      data: deletedTodo
     });
   } catch (err) {
+    console.log("Error deleting todo", err)
     res.status(500).json({
       status: "fail",
-      message: err.message,
+      message: 'failed to delete todo',
     });
   }
 };
